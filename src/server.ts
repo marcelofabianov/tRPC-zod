@@ -1,27 +1,25 @@
-import { createRouter } from 'trpc';
+import * as trpc from '@trpc/server';
 import { z } from 'zod';
-import express from 'express';
 
-const app = express();
-const router = createRouter();
+const appRouter = trpc
+  .router()
+  .query('getUser', {
+    input: z.string(),
+    async resolve(req) {
+      req.input; // string
+      return { id: req.input, name: 'Bilbo' };
+    },
+  })
+  .mutation('createUser', {
+    // validate input with Zod
+    input: z.object({ name: z.string().min(5) }),
+    async resolve(req) {
+      // use your ORM of choice
+      return await UserModel.create({
+        data: req.input,
+      });
+    },
+  });
 
-// Define o esquema de validação do trpc
-const helloWorldSchema = z.object({
-  name: z.string(),
-});
-
-// Define a rota de exemplo
-router.query('helloWorld', {
-  input: helloWorldSchema,
-  async resolve({ input }) {
-    return `Hello, ${input.name}!`;
-  },
-});
-
-// Adiciona as rotas do trpc no servidor
-app.use('/api/trpc', router.router);
-
-// Inicia o servidor
-app.listen(3000, () => {
-  console.log('Servidor iniciado na porta 3000');
-});
+// export type definition of API
+export type AppRouter = typeof appRouter;
